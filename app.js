@@ -498,6 +498,7 @@ function bindModalPitchSliders() {
   const semSlider   = form.querySelector('[name="transposeSemitones"]');
   const centsSlider = form.querySelector('[name="tuneCents"]');
   const keySelect   = form.querySelector('[name="key"]');
+  const loopId      = form.querySelector('[data-action="saveLoop"]')?.dataset.id;
 
   function updateKeyLabel() {
     const semVal = Number(semSlider?.value ?? 0);
@@ -517,14 +518,34 @@ function bindModalPitchSliders() {
     }
   }
 
+  // Auto-save pitch values and restart playback 700 ms after the slider stops.
+  // Only updates transposeSemitones/tuneCents — leaves modal open.
+  let pitchTimer = null;
+  function schedulePitchApply() {
+    clearTimeout(pitchTimer);
+    pitchTimer = setTimeout(() => {
+      if (!loopId) return;
+      const idx = state.loops.findIndex(l => l.id === loopId);
+      if (idx === -1) return;
+      const semVal   = Number(semSlider?.value   ?? 0);
+      const centsVal = Number(centsSlider?.value ?? 0);
+      state.loops[idx] = { ...state.loops[idx], transposeSemitones: semVal, tuneCents: centsVal };
+      saveState();
+      if (Player.isPlaying && Player.currentLoopId === loopId) {
+        const loop = state.loops[idx];
+        Player.play(loopId, loop.filename, loop);
+      }
+    }, 700);
+  }
+
   const onSem = () => {
     document.getElementById('semitones-display').textContent = semSlider.value;
     updateKeyLabel();
-    if (Player.isPlaying) Player.updatePitch(Number(semSlider.value), Number(centsSlider?.value ?? 0));
+    schedulePitchApply();
   };
   const onCents = () => {
     document.getElementById('cents-display').textContent = centsSlider.value;
-    if (Player.isPlaying) Player.updatePitch(Number(semSlider?.value ?? 0), Number(centsSlider.value));
+    schedulePitchApply();
   };
 
   semSlider?.addEventListener('input', onSem);
