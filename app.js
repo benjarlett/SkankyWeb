@@ -32,6 +32,7 @@ const state = {
   searchQuery: '',
   gigOpen: false,
   gigIndex: 0,
+  reorderMode: false,
 };
 
 // ── Persistence ────────────────────────────────────────────────────────────
@@ -123,14 +124,20 @@ function renderFilterBar() {
 
 function renderLoopsTab() {
   const loops = getFilteredLoops();
+  const inSetlist = state.currentFilter !== 'all';
   const rows = loops.length
     ? loops.map(renderLoopRow).join('')
     : `<p class="empty-msg">${state.searchQuery ? 'No matches.' : 'No loops yet. Add audio files in Settings.'}</p>`;
+
+  const reorderBtn = inSetlist
+    ? `<button class="btn-reorder-toggle ${state.reorderMode ? 'active' : ''}" data-action="toggleReorderMode" aria-label="Toggle reorder mode">⇅</button>`
+    : '';
 
   return `<div class="search-wrap">
     <input type="search" id="search-input" class="search-input"
       placeholder="Search loops…" value="${esc(state.searchQuery)}" autocomplete="off" spellcheck="false">
     ${state.searchQuery ? `<button class="btn-search-clear" data-action="clearSearch">✕</button>` : ''}
+    ${reorderBtn}
   </div>
   <div id="loop-list">${rows}</div>`;
 }
@@ -164,7 +171,7 @@ function renderLoopRow(loop) {
   }
 
   const inSetlist = state.currentFilter !== 'all';
-  const reorderBtns = inSetlist ? `<div class="reorder-btns">
+  const reorderBtns = inSetlist && state.reorderMode ? `<div class="reorder-btns">
     <button class="btn-reorder" data-action="moveLoop" data-id="${loop.id}" data-delta="-1" aria-label="Move up">▲</button>
     <button class="btn-reorder" data-action="moveLoop" data-id="${loop.id}" data-delta="1" aria-label="Move down">▼</button>
   </div>` : '';
@@ -836,6 +843,10 @@ document.addEventListener('click', async e => {
     case 'exportCSV':     handleExportCSV(); break;
     case 'stepPitch':     handleStepPitch(pitchTarget, Number(delta)); break;
     case 'moveLoop':      handleMoveLoop(id, Number(delta)); break;
+    case 'toggleReorderMode':
+      state.reorderMode = !state.reorderMode;
+      render();
+      break;
     case 'openMedia':     openMediaModal(url, mediatype); break;
     case 'clearSearch':
       state.searchQuery = '';
@@ -864,6 +875,7 @@ document.getElementById('tab-bar').addEventListener('click', e => {
 // Filter select
 document.getElementById('filter-select').addEventListener('change', e => {
   state.currentFilter = e.target.value;
+  state.reorderMode = false;
   render();
 });
 
