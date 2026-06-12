@@ -608,6 +608,11 @@ function handleSaveLoop(id) {
   saveState();
   closeModal();
   render();
+  // If this loop was playing, restart it so pitch/tuning changes are heard immediately
+  if (Player.isPlaying && Player.currentLoopId === id) {
+    const updated = state.loops[idx];
+    Player.play(id, updated.filename, updated);
+  }
 }
 
 async function handleDeleteLoop(id) {
@@ -946,9 +951,7 @@ async function init() {
   if ('serviceWorker' in navigator) {
     const reg = await navigator.serviceWorker.register('./sw.js').catch(e => { console.warn('SW:', e); return null; });
     if (reg) {
-      reg.update(); // check for new SW on every load
-      // When a new SW is waiting to activate, show a tap-to-update banner
-      // rather than auto-reloading and interrupting whatever the user is doing
+      reg.update();
       const showUpdateBanner = () => {
         if (document.getElementById('update-banner')) return;
         const banner = document.createElement('div');
@@ -957,14 +960,13 @@ async function init() {
         banner.onclick = () => location.reload();
         document.body.appendChild(banner);
       };
-      reg.addEventListener('updatefound', () => {
-        reg.installing?.addEventListener('statechange', e => {
-          if (e.target.state === 'installed' && navigator.serviceWorker.controller) {
-            showUpdateBanner();
-          }
-        });
+      // skipWaiting() in sw.js means the new worker goes installing→activating
+      // (skips 'installed'), so statechange never hits 'installed'.
+      // controllerchange fires reliably after skipWaiting + clients.claim().
+      const hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (hadController) showUpdateBanner();
       });
-      if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner();
     }
   }
 }

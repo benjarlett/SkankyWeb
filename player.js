@@ -5,6 +5,7 @@ import { getFile } from './db.js';
 let ctx         = null;
 let currentSrc  = null;   // AudioBufferSourceNode
 let endTimer    = null;
+let playToken   = 0;      // incremented on every play(); stale async calls bail out
 
 export let currentLoopId = null;
 export let isPlaying     = false;
@@ -19,9 +20,11 @@ function getCtx() {
 // ── Play ───────────────────────────────────────────────────────────────────
 
 export async function play(loopId, filename, data) {
+  const token = ++playToken;
   await stop();
 
   const blob = await getFile(filename);
+  if (token !== playToken) return false; // a newer play() was requested while loading
   if (!blob) return false;
 
   const audioCtx = getCtx();
