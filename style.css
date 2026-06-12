@@ -384,6 +384,16 @@ textarea { resize: vertical; }
   flex-direction: column;
 }
 
+/* modal-content is injected between modal-sheet and modal-body,
+   so it must also be a flex column to pass height constraints down */
+#modal-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
