@@ -944,7 +944,16 @@ async function init() {
   loadState();
   render();
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(e => console.warn('SW:', e));
+    const reg = await navigator.serviceWorker.register('./sw.js').catch(e => { console.warn('SW:', e); return null; });
+    if (reg) {
+      // Force the browser to check for a new SW on every load (default is 24h)
+      reg.update();
+      // When a new SW takes over, reload so fresh JS/CSS is served
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!reloading) { reloading = true; location.reload(); }
+      });
+    }
   }
 }
 
