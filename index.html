@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SkankyApp</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="SkankyApp">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+  <div id="app">
+    <header id="app-header">
+      <h1>SkankyApp</h1>
+      <select id="filter-select"></select>
+    </header>
+    <main id="app-content"></main>
+    <nav id="tab-bar">
+      <button class="tab-btn active" data-tab="loops">Loops</button>
+      <button class="tab-btn" data-tab="setlists">Setlists</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+    </nav>
+  </div>
+
+  <!-- Edit modal (slides up from bottom) -->
+  <div id="modal-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Edit loop">
+    <div id="modal-sheet">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Media embed modal -->
+  <div id="media-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Media player">
+    <div id="media-sheet">
+      <button id="media-close" aria-label="Close">✕</button>
+      <iframe id="media-frame"
+        title="Media player"
+        allow="autoplay; encrypted-media; clipboard-write"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    </div>
+  </div>
+
+  <!-- Tone.js for Web Audio with pitch shifting -->
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
