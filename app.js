@@ -108,7 +108,8 @@ function renderLoopsTab() {
 function renderLoopRow(loop) {
   const playing = Player.currentLoopId === loop.id;
   const expanded = state.expandedLoopId === loop.id || playing;
-  const playIcon = playing ? '&#9646;&#9646;' : (loop.looping ? '&#8635;' : '&#9654;');
+  const speakerSrc = playing ? 'icons/speaker-red.svg' : 'icons/speaker-green.svg';
+  const playIcon = `<img src="${speakerSrc}" class="icon-speaker" alt="${playing ? 'Stop' : 'Play'}">`;
   const playClass = playing ? 'btn-stop' : 'btn-go';
 
   let expandedHtml = '';
@@ -126,8 +127,8 @@ function renderLoopRow(loop) {
           ${hasNotes ? `<p class="loop-notes">${esc(loop.notes)}</p>` : ''}
         </div>
         <div class="loop-expanded-right">
-          ${hasYT ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.youtubeLink)}" data-mediatype="youtube">YT</button>` : ''}
-          ${hasSP ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.spotifyLink)}" data-mediatype="spotify">SP</button>` : ''}
+          ${hasYT ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.youtubeLink)}" data-mediatype="youtube" aria-label="YouTube"><img src="icons/youtube.svg" class="icon-media" alt="YouTube"></button>` : ''}
+          ${hasSP ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.spotifyLink)}" data-mediatype="spotify" aria-label="Spotify"><img src="icons/spotify.svg" class="icon-media" alt="Spotify"></button>` : ''}
         </div>
       </div>`;
     }
@@ -138,7 +139,7 @@ function renderLoopRow(loop) {
       <button class="btn-icon btn-edit" data-action="editLoop" data-id="${loop.id}" aria-label="Edit">&#9998;</button>
       <div class="loop-info" data-action="toggleExpand" data-id="${loop.id}">
         <span class="loop-title">${esc(loop.title)}</span>
-        <span class="loop-band">${esc(loop.band)}</span>
+        <span class="loop-band">${esc(loop.band)}${loop.looping ? ' <span class="loop-badge">↺</span>' : ''}</span>
       </div>
       <button class="btn-play ${playClass}" data-action="togglePlay" data-id="${loop.id}" aria-label="${playing ? 'Stop' : 'Play'}">
         ${playIcon}
@@ -758,7 +759,17 @@ document.addEventListener('playbackEnded', () => render());
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 
+function showSplash() {
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  setTimeout(() => {
+    splash.classList.add('fade-out');
+    splash.addEventListener('transitionend', () => splash.remove(), { once: true });
+  }, 1800);
+}
+
 async function init() {
+  showSplash();
   await initDB();
   loadState();
   render();

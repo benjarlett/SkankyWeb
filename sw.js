@@ -1,4 +1,4 @@
-const CACHE = 'skanky-v1';
+const CACHE = 'skanky-v2';
 const SHELL = [
   './',
   './index.html',
@@ -9,6 +9,11 @@ const SHELL = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/speaker-green.svg',
+  './icons/speaker-red.svg',
+  './icons/spotify.svg',
+  './icons/youtube.svg',
+  './icons/bass-hero.png',
   'https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js',
 ];
 
