@@ -1,4 +1,4 @@
-const CACHE = 'skanky-v8';
+const CACHE = 'skanky-v9';
 const SHELL = [
   './',
   './index.html',
@@ -14,7 +14,6 @@ const SHELL = [
   './icons/spotify.svg',
   './icons/youtube.svg',
   './icons/bass-hero.png',
-  'https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js',
   'https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js',
 ];
 
