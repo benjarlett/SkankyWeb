@@ -787,47 +787,47 @@ input[type="range"] {
 }
 
 .gig-title {
-  font-size: clamp(1.8rem, 7vw, 3.5rem);
+  font-size: clamp(2.2rem, 9vw, 4.5rem);
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.05;
   color: var(--text);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   word-break: break-word;
 }
 
 .gig-band {
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: var(--subtext);
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .gig-key {
-  font-size: 1.4rem;
+  font-size: 1.7rem;
   font-weight: 700;
   color: var(--yellow);
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   background: var(--grey2);
   display: inline-block;
-  padding: 4px 14px;
-  border-radius: 8px;
+  padding: 6px 18px;
+  border-radius: 10px;
 }
 
 .gig-chords {
-  font-size: clamp(1.2rem, 5vw, 2rem);
+  font-size: clamp(1.5rem, 6vw, 2.6rem);
   font-weight: 800;
   color: var(--yellow);
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .gig-notes {
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   color: var(--subtext);
   white-space: pre-wrap;
   word-break: break-word;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .gig-footer {
