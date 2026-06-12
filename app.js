@@ -347,16 +347,18 @@ function renderGigScreen() {
     <div class="gig-header">
       <button class="gig-exit" data-action="closeGig">✕</button>
       <span class="gig-pos">${idx + 1} / ${loops.length}</span>
-      <div class="gig-media-links">
-        ${hasYT ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.youtubeLink)}" data-mediatype="youtube" aria-label="YouTube"><img src="icons/youtube.svg" class="icon-media" alt="YT"></button>` : ''}
-        ${hasSP ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.spotifyLink)}" data-mediatype="spotify" aria-label="Spotify"><img src="icons/spotify.svg" class="icon-media" alt="SP"></button>` : ''}
+      <div class="gig-header-right">
+        ${kl ? `<span class="gig-key-badge">${esc(kl)}</span>` : ''}
+        <div class="gig-media-links">
+          ${hasYT ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.youtubeLink)}" data-mediatype="youtube" aria-label="YouTube"><img src="icons/youtube.svg" class="icon-media" alt="YT"></button>` : ''}
+          ${hasSP ? `<button class="media-btn" data-action="openMedia" data-url="${esc(loop.spotifyLink)}" data-mediatype="spotify" aria-label="Spotify"><img src="icons/spotify.svg" class="icon-media" alt="SP"></button>` : ''}
+        </div>
       </div>
     </div>
 
     <div class="gig-body">
       <h1 class="gig-title">${esc(loop.title)}</h1>
       <p class="gig-band">${esc(loop.band)}</p>
-      ${kl ? `<p class="gig-key">${esc(kl)}</p>` : ''}
       ${loop.chords?.trim() ? `<p class="gig-chords">${esc(loop.chords)}</p>` : ''}
       ${loop.notes?.trim()  ? `<p class="gig-notes">${esc(loop.notes)}</p>`   : ''}
     </div>
