@@ -717,7 +717,7 @@ function handleStepPitch(target, delta) {
 
 // ── CSV Export ─────────────────────────────────────────────────────────────
 
-function handleExportCSV() {
+async function handleExportCSV() {
   const csvLoops = [
     'id,title,band,filepath,looping,spotifyLink,youtubeLink,setlists,transposeSemitones,tuneCents,notes,chords,key',
     ...state.loops.map(l =>
@@ -729,9 +729,22 @@ function handleExportCSV() {
   ].join('\n');
   const csvBands    = ['name', ...state.bands.map(b => csvEsc(b.name))].join('\n');
   const csvSetlists = ['name,loopIds', ...state.setlists.map(sl => `${csvEsc(sl.name)},"${sl.loopIds.join(';')}"`),].join('\n');
-  downloadText('loops.csv',    csvLoops);
-  setTimeout(() => downloadText('bands.csv',    csvBands),    300);
-  setTimeout(() => downloadText('setlists.csv', csvSetlists), 600);
+
+  // On iOS PWA, <a download> is silently ignored; use Web Share API instead.
+  const files = [
+    new File([csvLoops],    'loops.csv',    { type: 'text/csv' }),
+    new File([csvBands],    'bands.csv',    { type: 'text/csv' }),
+    new File([csvSetlists], 'setlists.csv', { type: 'text/csv' }),
+  ];
+  if (navigator.canShare?.({ files })) {
+    await navigator.share({ files, title: 'SkankyApp export' }).catch(e => {
+      if (e.name !== 'AbortError') alert('Share failed: ' + e.message);
+    });
+  } else {
+    downloadText('loops.csv',    csvLoops);
+    setTimeout(() => downloadText('bands.csv',    csvBands),    300);
+    setTimeout(() => downloadText('setlists.csv', csvSetlists), 600);
+  }
 }
 
 function csvEsc(s) {
@@ -847,7 +860,7 @@ document.addEventListener('click', async e => {
     case 'deleteSetlist': handleDeleteSetlist(id); break;
     case 'deleteBand':    handleDeleteBand(id); break;
     case 'addBand':       handleAddBand(); break;
-    case 'exportCSV':     handleExportCSV(); break;
+    case 'exportCSV':     await handleExportCSV(); break;
     case 'stepPitch':     handleStepPitch(pitchTarget, Number(delta)); break;
     case 'moveLoop':      handleMoveLoop(id, Number(delta)); break;
     case 'toggleReorderMode':
