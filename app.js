@@ -64,17 +64,15 @@ function esc(str) {
 }
 
 function getFilteredLoops() {
-  let list = [...state.loops];
-  if (state.currentFilter !== 'all') {
-    const sl = state.setlists.find(s => s.name === state.currentFilter);
-    if (sl) {
-      const ids = new Set(sl.loopIds);
-      list = list.filter(l => ids.has(l.id));
-    } else {
-      list = [];
-    }
+  if (state.currentFilter === 'all') {
+    return [...state.loops].sort((a, b) => a.title.localeCompare(b.title));
   }
-  return list.sort((a, b) => a.title.localeCompare(b.title));
+  const sl = state.setlists.find(s => s.name === state.currentFilter);
+  if (!sl) return [];
+  // Preserve the setlist's explicit order
+  return sl.loopIds
+    .map(id => state.loops.find(l => l.id === id))
+    .filter(Boolean);
 }
 
 function findLoop(id) {
@@ -134,9 +132,15 @@ function renderLoopRow(loop) {
     }
   }
 
+  const inSetlist = state.currentFilter !== 'all';
+  const reorderBtns = inSetlist ? `<div class="reorder-btns">
+      <button class="btn-reorder" data-action="moveLoop" data-id="${loop.id}" data-delta="-1" aria-label="Move up">▲</button>
+      <button class="btn-reorder" data-action="moveLoop" data-id="${loop.id}" data-delta="1" aria-label="Move down">▼</button>
+    </div>` : '';
+
   return `<div class="loop-row${playing ? ' playing' : ''}" data-loop-id="${loop.id}">
     <div class="loop-row-main">
-      <button class="btn-icon btn-edit" data-action="editLoop" data-id="${loop.id}" aria-label="Edit">&#9998;</button>
+      ${reorderBtns}<button class="btn-icon btn-edit" data-action="editLoop" data-id="${loop.id}" aria-label="Edit">&#9998;</button>
       <div class="loop-info" data-action="toggleExpand" data-id="${loop.id}">
         <span class="loop-title">${esc(loop.title)}</span>
         <span class="loop-band">${esc(loop.band)}${loop.looping ? ' <span class="loop-badge">↺</span>' : ''}</span>
@@ -543,6 +547,19 @@ function handleDeleteSetlist(id) {
   render();
 }
 
+function handleMoveLoop(loopId, delta) {
+  const sl = state.setlists.find(s => s.name === state.currentFilter);
+  if (!sl) return;
+  const idx = sl.loopIds.indexOf(loopId);
+  if (idx === -1) return;
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= sl.loopIds.length) return;
+  sl.loopIds.splice(idx, 1);
+  sl.loopIds.splice(newIdx, 0, loopId);
+  saveState();
+  render();
+}
+
 function handleStepPitch(target, delta) {
   const form = document.getElementById('edit-form');
   if (!form) return;
@@ -720,6 +737,7 @@ document.addEventListener('click', async e => {
     case 'addBand':       handleAddBand(); break;
     case 'exportCSV':     handleExportCSV(); break;
     case 'stepPitch':     handleStepPitch(pitchTarget, Number(delta)); break;
+    case 'moveLoop':      handleMoveLoop(id, Number(delta)); break;
     case 'openMedia':     openMediaModal(url, mediatype); break;
   }
 });

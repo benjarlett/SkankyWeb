@@ -124,6 +124,23 @@ html, body {
 
 .btn-edit { color: var(--subtext); }
 
+.reorder-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.btn-reorder {
+  background: none;
+  border: none;
+  color: var(--grey4);
+  font-size: 0.6rem;
+  cursor: pointer;
+  padding: 1px 4px;
+  line-height: 1;
+}
+
 .loop-info {
   flex: 1;
   cursor: pointer;
