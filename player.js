@@ -7,6 +7,12 @@ let currentSrc  = null;   // AudioBufferSourceNode
 let endTimer    = null;
 let playToken   = 0;      // incremented on every play(); stale async calls bail out
 
+// Processed-buffer cache — avoids re-running the phase vocoder for loops
+// played more than once at the same pitch.  Keyed by "filename:semitones".
+// Simple LRU: oldest entry evicted once the map exceeds PV_CACHE_MAX entries.
+const pvCache     = new Map();
+const PV_CACHE_MAX = 6;
+
 export let currentLoopId = null;
 export let isPlaying     = false;
 
@@ -34,7 +40,22 @@ export async function play(loopId, filename, data) {
   const semitones = (data.transposeSemitones || 0) + (data.tuneCents || 0) / 100;
   const looping   = !!data.looping;
 
-  const buffer = Math.abs(semitones) < 0.01 ? raw : pvShift(raw, semitones);
+  let buffer;
+  if (Math.abs(semitones) < 0.01) {
+    buffer = raw;
+  } else {
+    const cacheKey = `${filename}:${semitones.toFixed(3)}`;
+    if (pvCache.has(cacheKey)) {
+      buffer = pvCache.get(cacheKey);
+      // Refresh LRU position
+      pvCache.delete(cacheKey);
+      pvCache.set(cacheKey, buffer);
+    } else {
+      buffer = pvShift(raw, semitones);
+      if (pvCache.size >= PV_CACHE_MAX) pvCache.delete(pvCache.keys().next().value);
+      pvCache.set(cacheKey, buffer);
+    }
+  }
 
   const src = audioCtx.createBufferSource();
   src.buffer = buffer;
@@ -66,6 +87,14 @@ export async function stop() {
 }
 
 export function updatePitch() {}
+
+// Evict all cached buffers for a given filename (call when pitch is changed
+// so the next play re-processes rather than using a stale buffer).
+export function clearCacheFor(filename) {
+  for (const key of pvCache.keys()) {
+    if (key.startsWith(filename + ':')) pvCache.delete(key);
+  }
+}
 
 // ── Internal helpers ───────────────────────────────────────────────────────
 

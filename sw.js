@@ -1,4 +1,4 @@
-const CACHE = 'skanky-v13';
+const CACHE = 'skanky-v14';
 const SHELL = [
   './',
   './index.html',

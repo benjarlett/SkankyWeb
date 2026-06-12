@@ -531,8 +531,9 @@ function bindModalPitchSliders() {
       const centsVal = Number(centsSlider?.value ?? 0);
       state.loops[idx] = { ...state.loops[idx], transposeSemitones: semVal, tuneCents: centsVal };
       saveState();
+      const loop = state.loops[idx];
+      Player.clearCacheFor(loop.filename); // stale processed buffer no longer valid
       if (Player.isPlaying && Player.currentLoopId === loopId) {
-        const loop = state.loops[idx];
         Player.play(loopId, loop.filename, loop);
       }
     }, 700);
