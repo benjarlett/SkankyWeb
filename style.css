@@ -431,6 +431,7 @@ textarea { resize: vertical; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   flex: 1;
+  min-height: 0;
   padding: 16px;
 }
 
