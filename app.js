@@ -66,7 +66,13 @@ function esc(str) {
 function getFilteredLoops() {
   let list = [...state.loops];
   if (state.currentFilter !== 'all') {
-    list = list.filter(l => l.setlists.includes(state.currentFilter));
+    const sl = state.setlists.find(s => s.name === state.currentFilter);
+    if (sl) {
+      const ids = new Set(sl.loopIds);
+      list = list.filter(l => ids.has(l.id));
+    } else {
+      list = [];
+    }
   }
   return list.sort((a, b) => a.title.localeCompare(b.title));
 }
