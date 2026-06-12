@@ -1,4 +1,4 @@
-const CACHE = 'skanky-v2';
+const CACHE = 'skanky-v3';
 const SHELL = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const SHELL = [
   './icons/youtube.svg',
   './icons/bass-hero.png',
   'https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js',
+  'https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js',
 ];
 
 self.addEventListener('install', e => {

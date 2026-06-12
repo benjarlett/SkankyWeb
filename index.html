@@ -23,6 +23,7 @@
     <header id="app-header">
       <h1>SkankyApp</h1>
       <select id="filter-select"></select>
+      <button id="gig-btn" class="btn-gig" data-action="openGig" aria-label="Gig mode" style="display:none">🎤</button>
     </header>
     <main id="app-content"></main>
     <nav id="tab-bar">
@@ -52,8 +53,13 @@
     </div>
   </div>
 
+  <!-- Gig mode full-screen overlay -->
+  <div id="gig-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Gig mode"></div>
+
   <!-- Tone.js for Web Audio with pitch shifting -->
   <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+  <!-- Fuse.js for fuzzy search -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
