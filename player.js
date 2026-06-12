@@ -1,143 +1,75 @@
 import { getFile } from './db.js';
 
-// Try to load SoundTouch (WSOLA — much better quality than phase vocoder).
-// Dynamic import so a CDN failure degrades gracefully instead of crashing.
-let _st = null;
-import('https://cdn.jsdelivr.net/npm/soundtouch-js@0.1.1/dist/soundtouch.esm.js')
-  .then(m  => { _st = m; })
-  .catch(() => console.warn('SoundTouch unavailable — using native pitch'));
-
-// ── State ──────────────────────────────────────────────────────────────────
-
-let ctx         = null;
-let currentNode = null;   // ScriptProcessorNode (SoundTouch) or AudioBufferSourceNode
-let currentST   = null;   // SoundTouch instance — kept for live updatePitch()
-let endTimer    = null;
+// Tone.js loaded globally from CDN (see index.html)
+let tonePlayer = null;
+let pitchShift = null;
+let toneStarted = false;
 
 export let currentLoopId = null;
-export let isPlaying     = false;
+export let isPlaying = false;
 
-// ── AudioContext ───────────────────────────────────────────────────────────
-
-function getCtx() {
-  if (!ctx || ctx.state === 'closed') ctx = new AudioContext();
-  return ctx;
+async function ensureToneStarted() {
+  if (!toneStarted) {
+    await Tone.start();
+    toneStarted = true;
+  }
 }
 
-// ── Play ───────────────────────────────────────────────────────────────────
-
-export async function play(loopId, filename, data) {
+export async function play(loopId, filename, loopData) {
   await stop();
 
   const blob = await getFile(filename);
   if (!blob) return false;
 
-  const audioCtx = getCtx();
-  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  const arrayBuffer = await blob.arrayBuffer();
+  const audioBuffer = await Tone.context.decodeAudioData(arrayBuffer);
 
-  const audioBuffer = await audioCtx.decodeAudioData(await blob.arrayBuffer());
-  const duration    = audioBuffer.duration;
-  const looping     = !!data.looping;
-  const semitones   = (data.transposeSemitones || 0) + (data.tuneCents || 0) / 100;
+  const semitones = (loopData.transposeSemitones || 0) + (loopData.tuneCents || 0) / 100;
 
-  if (Math.abs(semitones) < 0.01) {
-    // ── No shift: native playback, zero quality loss ───────────────────────
-    _playNative(audioCtx, audioBuffer, looping, 1);
-    if (!looping) endTimer = setTimeout(() => _finish(loopId), duration * 1000 + 300);
+  // windowSize 0.4s (default is 0.1s) — larger window = more frequency resolution,
+  // significantly less grain on sustained notes like bass and chords
+  pitchShift = new Tone.PitchShift({
+    pitch: semitones,
+    windowSize: 0.4,
+  }).toDestination();
 
-  } else if (_st) {
-    // ── SoundTouch WSOLA: pitch-preserving, minimal artefacts ─────────────
-    const { SoundTouch, SimpleFilter, getWebAudioNode } = _st;
-    const st = new SoundTouch();
-    st.pitchSemitones = semitones;
-    st.tempo          = 1.0;
-    currentST = st;
+  tonePlayer = new Tone.Player(audioBuffer).connect(pitchShift);
+  tonePlayer.loop = loopData.looping;
 
-    const filter = new SimpleFilter(_makeSource(audioBuffer, looping), st);
-    const node   = getWebAudioNode(audioCtx, filter, 4096);
-    node.connect(audioCtx.destination);
-    currentNode = node;
-    if (!looping) endTimer = setTimeout(() => _finish(loopId), duration * 1000 + 1500);
-
-  } else {
-    // ── Fallback: native playbackRate (changes tempo slightly too) ─────────
-    const rate = Math.pow(2, semitones / 12);
-    _playNative(audioCtx, audioBuffer, looping, rate);
-    if (!looping) endTimer = setTimeout(() => _finish(loopId), (duration / rate) * 1000 + 300);
-  }
+  await ensureToneStarted();
+  tonePlayer.start();
 
   currentLoopId = loopId;
-  isPlaying     = true;
+  isPlaying = true;
+
+  if (!loopData.looping) {
+    const durationMs = audioBuffer.duration * 1000;
+    setTimeout(() => {
+      if (currentLoopId === loopId) {
+        currentLoopId = null;
+        isPlaying = false;
+        document.dispatchEvent(new CustomEvent('playbackEnded', { detail: { loopId } }));
+      }
+    }, durationMs + 200);
+  }
+
   return true;
 }
 
-function _playNative(audioCtx, audioBuffer, looping, rate) {
-  const src = audioCtx.createBufferSource();
-  src.buffer            = audioBuffer;
-  src.loop              = looping;
-  src.playbackRate.value = rate;
-  src.connect(audioCtx.destination);
-  src.start();
-  currentNode = src;
-  currentST   = null;
-}
-
-// ── Stop ───────────────────────────────────────────────────────────────────
-
 export async function stop() {
-  if (endTimer) { clearTimeout(endTimer); endTimer = null; }
-  if (currentNode) {
-    try {
-      if (currentNode.stop) currentNode.stop();
-      currentNode.disconnect();
-    } catch (_) {}
-    currentNode = null;
+  if (tonePlayer) {
+    try { tonePlayer.stop(); } catch (_) {}
+    tonePlayer.dispose();
+    tonePlayer = null;
   }
-  currentST     = null;
+  if (pitchShift) {
+    pitchShift.dispose();
+    pitchShift = null;
+  }
   currentLoopId = null;
-  isPlaying     = false;
+  isPlaying = false;
 }
-
-// ── Live pitch update (edit modal sliders) ─────────────────────────────────
 
 export function updatePitch(semitones, cents) {
-  const total = semitones + cents / 100;
-  if (currentST) {
-    currentST.pitchSemitones = total;
-  } else if (currentNode?.playbackRate) {
-    currentNode.playbackRate.value = Math.pow(2, total / 12);
-  }
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function _finish(loopId) {
-  if (currentLoopId !== loopId) return;
-  stop().then(() =>
-    document.dispatchEvent(new CustomEvent('playbackEnded', { detail: { loopId } }))
-  );
-}
-
-// Adapter: provides AudioBuffer samples to SoundTouch SimpleFilter.
-// extract(target, numFrames, absolutePosition) → framesWritten
-// target is interleaved stereo Float32Array: [L0,R0, L1,R1, ...]
-function _makeSource(audioBuffer, looping) {
-  const left  = audioBuffer.getChannelData(0);
-  const right  = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : left;
-  const total  = left.length;
-
-  return {
-    extract(target, numFrames, position) {
-      let count = 0;
-      for (let i = 0; i < numFrames; i++) {
-        let idx = position + i;
-        if (looping)        idx = idx % total;
-        else if (idx >= total) break;
-        target[i * 2]     = left[idx];
-        target[i * 2 + 1] = right[idx];
-        count++;
-      }
-      return count;
-    },
-  };
+  if (pitchShift) pitchShift.pitch = semitones + cents / 100;
 }
