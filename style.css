@@ -636,6 +636,25 @@ input[type="range"] {
   pointer-events: none;
 }
 
+/* ── Update banner ───────────────────────────────────────────────────────── */
+
+#update-banner {
+  position: fixed;
+  bottom: calc(var(--tab-h) + var(--safe-bottom) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--yellow);
+  color: var(--black);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 500;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  white-space: nowrap;
+}
+
 /* ── Key badge ───────────────────────────────────────────────────────────── */
 
 .key-badge {
